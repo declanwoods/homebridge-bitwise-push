@@ -13,7 +13,7 @@
     "url": "https://github.com/declanwoods/homebridge-bitwise-push/issues"
   },
   "engines": {
-    "node": "^18.17.0",
+    "node": "^16.16.0",
     "homebridge": "^1.6.0"
   },
   "main": "dist/index.js",
@@ -26,7 +26,7 @@
   "keywords": [
     "homebridge-plugin"
   ],
-  "dependencies": {
+  "peerDependencies": {
     "hap-nodejs": "^0.11.1"
   },
   "devDependencies": {
