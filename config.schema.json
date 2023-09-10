@@ -1,15 +1,29 @@
 {
-  "pluginAlias": "ExampleHomebridgePlugin",
+  "pluginAlias": "BitwisePushGarageDoor",
   "pluginType": "platform",
   "singular": true,
   "schema": {
     "type": "object",
     "properties": {
-      "name": {
-        "title": "Name",
-        "type": "string",
+      "devices": {
+        "type": "array",
         "required": true,
-        "default": "Example Dynamic Platform"
+        "items": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "title": "Name",
+              "type": "string",
+              "required": true
+            },
+            "ip": {
+              "title": "IP",
+              "type": "string",
+              "required": true,
+              "format": "ipv4"
+            }
+          }
+        }
       }
     }
   }
