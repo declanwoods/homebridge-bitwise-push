@@ -1,7 +1,7 @@
 import { Service, PlatformAccessory, CharacteristicValue } from 'homebridge';
 
 import { BitwisePushGarageDoor } from './platform';
-import { CurrentDoorState, ObstructionDetected, TargetDoorState } from 'hap-nodejs/dist/lib/definitions';
+import { CurrentDoorState } from 'hap-nodejs/dist/lib/definitions';
 
 export type BitwiseDeviceContext = {
   name: string;
