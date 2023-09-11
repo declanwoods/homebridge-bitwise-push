@@ -54,6 +54,8 @@ export class BitwisePushGarageDoorAccessory {
   }
 
   async onGetDoorState(): Promise<CharacteristicValue> {
+    this.platform.log.info('Get Current Door State');
+    this.platform.log.info('Current Target Door State -> ', this.targetState);
     const context = this.accessory.context;
 
     const output = context.output;
@@ -76,7 +78,7 @@ export class BitwisePushGarageDoorAccessory {
       state = CurrentDoorState.CLOSED;
     }
 
-    this.platform.log.info('Get Current Door State -> ', state);
+    this.platform.log.info('Get Current Door State Value -> ', state);
 
     return state;
   }
@@ -88,6 +90,7 @@ export class BitwisePushGarageDoorAccessory {
 
   async onSetTargetDoorState(value: CharacteristicValue) {
     this.platform.log.info('Set Target Door State -> ', value);
+    this.platform.log.info('Current Target Door State -> ', this.targetState);
 
     const context = this.accessory.context;
 
