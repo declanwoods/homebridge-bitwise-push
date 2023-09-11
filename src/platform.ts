@@ -47,7 +47,7 @@ export class BitwisePushGarageDoor implements DynamicPlatformPlugin {
     const config = this.config as BitwisePushGarageDoorConfig;
 
     for (const device of config.devices ?? []) {
-      const uuid = this.api.hap.uuid.generate(device.ip);
+      const uuid = this.api.hap.uuid.generate(`${device.ip}:${device.tcpport}:${device.output}`);
       const existingAccessory = this.accessories.find(accessory => accessory.UUID === uuid);
 
       if (existingAccessory) {
@@ -79,6 +79,8 @@ export class BitwisePushGarageDoor implements DynamicPlatformPlugin {
         this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
       }
     }
+
+
 
     // this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [existingAccessory]);
     // this.log.info('Removing existing accessory from cache:', existingAccessory.displayName);
