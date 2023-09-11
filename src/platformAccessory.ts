@@ -97,17 +97,13 @@ export class BitwisePushGarageDoorAccessory {
     const outputtype = 'pulse:2';
     const output = this.accessory.context.output;
 
-    if ((value === TargetDoorState.OPEN && this.targetState === TargetDoorState.CLOSED) ||
-        (value === TargetDoorState.CLOSED && this.targetState === TargetDoorState.OPEN)) {
-      const state = 1;
+    const currentDoorState = (await this.onGetDoorState()) as number;
+
+    if ((value === TargetDoorState.OPEN && currentDoorState === TargetDoorState.CLOSED) ||
+        (value === TargetDoorState.CLOSED && currentDoorState === TargetDoorState.OPEN)) {
       this.targetState = value as number;
-      const command = `bwc:set:${outputtype}:${output}:${state}:`;
-      this.socket.send(command, 0, command.length, context.udpport, context.ip, (err) => {
-        this.platform.log.info(`----SOCKET---- sent udp ${command}`);
-        if (err) {
-          this.platform.log.error('udp error: ', err);
-        }
-      });
+      const command = `bwc:set:${outputtype}:${output}:1:`;
+      await this.sendTcpCommand({ command, ipaddress: context.ip, port: context.tcpport });
     }
   }
 
