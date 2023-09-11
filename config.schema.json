@@ -21,6 +21,23 @@
               "type": "string",
               "required": true,
               "format": "ipv4"
+            },
+            "port": {
+              "title": "UDP Port Number",
+              "type": "number",
+              "required": true
+            },
+            "output": {
+              "title": "Output Number",
+              "type": "number",
+              "required": true,
+              "min": 1,
+              "max": 2
+            },
+            "threshold": {
+              "title": "Closed Threshold",
+              "type": "number",
+              "required": false
             }
           }
         }
