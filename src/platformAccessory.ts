@@ -16,7 +16,6 @@ export type BitwiseDeviceContext = {
 
 export class BitwisePushGarageDoorAccessory {
   private service: Service;
-  private socket: Socket;
 
   private targetState: number; // TargetDoorState
 
@@ -44,12 +43,10 @@ export class BitwisePushGarageDoorAccessory {
     this.service.getCharacteristic(this.platform.Characteristic.ObstructionDetected)
       .onGet(this.onGetObstructionDetected.bind(this));
 
-    const opts: SocketOptions = { type: 'udp4', reuseAddr: true };
-    this.socket = createSocket(opts);
-
     this.targetState = 0;
     setTimeout(async () => {
       this.targetState = (await this.onGetDoorState()) as number;
+      this.platform.log.info('Set Initial Door Target State -> ', this.targetState);
     }, 100);
   }
 
