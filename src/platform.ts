@@ -1,7 +1,8 @@
 import { API, DynamicPlatformPlugin, Logger, PlatformAccessory, PlatformConfig, Service, Characteristic } from 'homebridge';
 
 import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
-import { BitwiseDeviceContext, BitwisePushGarageDoorAccessory } from './platformAccessory';
+// import { BitwiseDeviceContext, BitwisePushGarageDoorAccessory } from './platformAccessory';
+import { BitwiseDeviceContext, BitwisePushButtonAccessory } from './platformAccessoryButton';
 
 export type BitwisePushGarageDoorConfig = {
   devices?: {
@@ -60,7 +61,7 @@ export class BitwisePushGarageDoor implements DynamicPlatformPlugin {
         existingAccessory.context.threshold = device.threshold;
         this.api.updatePlatformAccessories([existingAccessory]);
 
-        new BitwisePushGarageDoorAccessory(this, existingAccessory);
+        new BitwisePushButtonAccessory(this, existingAccessory);
       } else {
         this.log.info('Adding new accessory:', device.name);
 
@@ -73,7 +74,7 @@ export class BitwisePushGarageDoor implements DynamicPlatformPlugin {
         accessory.context.output = device.output;
         accessory.context.threshold = device.threshold;
 
-        new BitwisePushGarageDoorAccessory(this, accessory);
+        new BitwisePushButtonAccessory(this, accessory);
 
         this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
       }

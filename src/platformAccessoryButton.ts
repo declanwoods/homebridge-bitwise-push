@@ -1,7 +1,6 @@
 import { Service, PlatformAccessory, CharacteristicValue } from 'homebridge';
 
 import { BitwisePushGarageDoor } from './platform';
-import { CurrentDoorState, TargetDoorState } from 'hap-nodejs/dist/lib/definitions';
 import * as net from 'net';
 
 export type BitwiseDeviceContext = {
@@ -13,10 +12,8 @@ export type BitwiseDeviceContext = {
   threshold?: number;
 };
 
-export class BitwisePushGarageDoorAccessory {
+export class BitwisePushButtonAccessory {
   private service: Service;
-
-  private targetState: number; // TargetDoorState
 
   constructor(
     private readonly platform: BitwisePushGarageDoor,
@@ -25,33 +22,20 @@ export class BitwisePushGarageDoorAccessory {
     this.accessory.getService(this.platform.Service.AccessoryInformation)!
       .setCharacteristic(this.platform.Characteristic.Manufacturer, 'BitWise')
       .setCharacteristic(this.platform.Characteristic.Model, 'Push')
-      .setCharacteristic(this.platform.Characteristic.SerialNumber, '');
+      .setCharacteristic(this.platform.Characteristic.SerialNumber, accessory.context.name);
 
-    this.service = this.accessory.getService(this.platform.Service.GarageDoorOpener) ||
-        this.accessory.addService(this.platform.Service.GarageDoorOpener);
+    this.service = this.accessory.getService(this.platform.Service.Switch) ||
+        this.accessory.addService(this.platform.Service.Switch);
 
     this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.name);
 
-    this.service.getCharacteristic(this.platform.Characteristic.CurrentDoorState)
-      .onGet(this.onGetDoorState.bind(this));
-
-    this.service.getCharacteristic(this.platform.Characteristic.TargetDoorState)
-      .onGet(this.onGetTargetDoorState.bind(this))
-      .onSet(this.onSetTargetDoorState.bind(this));
-
-    this.service.getCharacteristic(this.platform.Characteristic.ObstructionDetected)
-      .onGet(this.onGetObstructionDetected.bind(this));
-
-    this.targetState = 0;
-    setTimeout(async () => {
-      this.targetState = (await this.onGetDoorState()) as number;
-      this.platform.log.info('Set Initial Door Target State -> ', this.targetState);
-    }, 100);
+    this.service.getCharacteristic(this.platform.Characteristic.On)
+      .onGet(this.onGet.bind(this))
+      .onSet(this.onSet.bind(this));
   }
 
-  async onGetDoorState(): Promise<CharacteristicValue> {
+  async onGet(): Promise<CharacteristicValue> {
     this.platform.log.info('Get Current Door State');
-    this.platform.log.info('Current Target Door State -> ', this.targetState);
 
     const state = await this.readStateFromBox();
 
@@ -60,36 +44,19 @@ export class BitwisePushGarageDoorAccessory {
     return state;
   }
 
-  async onGetTargetDoorState(): Promise<CharacteristicValue> {
-    this.platform.log.info('Get Target Door State -> ', this.targetState);
-    return this.targetState;
-  }
-
-  async onSetTargetDoorState(value: CharacteristicValue) {
-    this.platform.log.info('Set Target Door State -> ', value);
-    this.platform.log.info('Current Target Door State -> ', this.targetState);
+  async onSet() {
+    this.platform.log.info('Trigger Door');
 
     const context = this.accessory.context;
 
     const outputtype = 'pulse:2';
     const output = this.accessory.context.output;
 
-    const currentDoorState = (await this.readStateFromBox()) as number;
-
-    if ((value === TargetDoorState.OPEN && currentDoorState === TargetDoorState.CLOSED) ||
-        (value === TargetDoorState.CLOSED && currentDoorState === TargetDoorState.OPEN)) {
-      this.targetState = value as number;
-      const command = `bwc:set:${outputtype}:${output}:1:`;
-      await this.sendTcpCommand({ command, ipaddress: context.ip, port: context.tcpport });
-    }
+    const command = `bwc:set:${outputtype}:${output}:1:`;
+    await this.sendTcpCommand({ command, ipaddress: context.ip, port: context.tcpport });
   }
 
-  async onGetObstructionDetected(): Promise<CharacteristicValue> {
-    this.platform.log.info('Get Obstruction Detected -> ', false);
-    return false;
-  }
-
-  async readStateFromBox(): Promise<number> {
+  async readStateFromBox(): Promise<boolean> {
     const context = this.accessory.context;
 
     const command = `bwc:get:ad:${context.output}:`;
@@ -105,10 +72,7 @@ export class BitwisePushGarageDoorAccessory {
     const [value, min, max] = response.split(':').slice(4, 7);
     const maxInt = parseInt(max);
 
-    let state = CurrentDoorState.OPEN;
-    if (maxInt < 200) {
-      state = CurrentDoorState.CLOSED;
-    }
+    const state = maxInt >= (context.threshold ?? 200); // greater = open
 
     return state;
   }
