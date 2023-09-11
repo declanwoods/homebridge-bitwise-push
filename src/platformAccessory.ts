@@ -94,11 +94,10 @@ export class BitwisePushGarageDoorAccessory {
     const outputtype = 'pulse:2';
     const output = this.accessory.context.output;
 
-    this.targetState = value as number;
-
     if ((value === TargetDoorState.OPEN && this.targetState === TargetDoorState.CLOSED) ||
         (value === TargetDoorState.CLOSED && this.targetState === TargetDoorState.OPEN)) {
       const state = 1;
+      this.targetState = value as number;
       const command = `bwc:set:${outputtype}:${output}:${state}:`;
       this.socket.send(command, 0, command.length, context.udpport, context.ip, (err) => {
         this.platform.log.info(`----SOCKET---- sent udp ${command}`);
