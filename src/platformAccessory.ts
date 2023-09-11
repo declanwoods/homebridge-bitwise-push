@@ -65,7 +65,7 @@ export class BitwisePushGarageDoorAccessory {
       throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
     }
 
-    this.platform.log.debug('Get Current Door response -> ', response);
+    this.platform.log.info('Get Current Door response -> ', response);
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [value, min, max] = response.split(':').slice(4, 7);
@@ -76,18 +76,18 @@ export class BitwisePushGarageDoorAccessory {
       state = CurrentDoorState.CLOSED;
     }
 
-    this.platform.log.debug('Get Current Door State -> ', state);
+    this.platform.log.info('Get Current Door State -> ', state);
 
     return state;
   }
 
   async onGetTargetDoorState(): Promise<CharacteristicValue> {
-    this.platform.log.debug('Get Target Door State -> ', this.targetState);
+    this.platform.log.info('Get Target Door State -> ', this.targetState);
     return this.targetState;
   }
 
   async onSetTargetDoorState(value: CharacteristicValue) {
-    this.platform.log.debug('Set Target Door State -> ', value);
+    this.platform.log.info('Set Target Door State -> ', value);
 
     const context = this.accessory.context;
 
@@ -105,7 +105,7 @@ export class BitwisePushGarageDoorAccessory {
 
     const command = `bwc:set:${outputtype}:${output}:${state}:`;
     this.socket.send(command, 0, command.length, context.udpport, context.ip, (err) => {
-      this.platform.log.debug(`----SOCKET---- sent udp ${command}`);
+      this.platform.log.info(`----SOCKET---- sent udp ${command}`);
       if (err) {
         this.platform.log.error('udp error: ', err);
       }
@@ -113,7 +113,7 @@ export class BitwisePushGarageDoorAccessory {
   }
 
   async onGetObstructionDetected(): Promise<CharacteristicValue> {
-    this.platform.log.debug('Get Obstruction Detected -> ', false);
+    this.platform.log.info('Get Obstruction Detected -> ', false);
     return false;
   }
 
@@ -121,14 +121,14 @@ export class BitwisePushGarageDoorAccessory {
     return await new Promise<string>((resolve, reject) => {
       const client = new net.Socket();
       client.connect(port, ipaddress, () => {
-        this.platform.log.debug(`Connected to ${ipaddress}:${port}`);
+        this.platform.log.info(`Connected to ${ipaddress}:${port}`);
         client.write(command + '\r\n');
       });
 
       client.on('data', (data) => {
         const body = data.toString('utf-8');
         if (body.startsWith('bwr:')) {
-          this.platform.log.debug('Received: ' + body);
+          this.platform.log.info('Received: ' + body);
           client.write('bwc:tcpclose:\r\n');
           client.destroy();
           return resolve(body);
@@ -136,7 +136,7 @@ export class BitwisePushGarageDoorAccessory {
       });
 
       client.on('error', (err) => {
-        this.platform.log.debug('Connection errored');
+        this.platform.log.info('Connection errored');
         return reject(err);
       });
 
