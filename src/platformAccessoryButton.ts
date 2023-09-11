@@ -35,11 +35,9 @@ export class BitwisePushButtonAccessory {
   }
 
   async onGet(): Promise<CharacteristicValue> {
-    this.platform.log.info('Get Current Door State');
+    this.platform.log.debug('Get Current Door State');
 
     const state = await this.readStateFromBox();
-
-    this.platform.log.info('Get Current Door State Value -> ', state);
 
     return state;
   }
@@ -66,29 +64,29 @@ export class BitwisePushButtonAccessory {
       throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
     }
 
-    this.platform.log.info('Get Current Door Response -> ', response);
-
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [value, min, max] = response.split(':').slice(4, 7);
     const maxInt = parseInt(max);
 
-    const state = maxInt >= (context.threshold ?? 200); // greater = open
+    const isOpen = maxInt >= (context.threshold ?? 200); // greater = open
 
-    return state;
+    this.platform.log.debug('Get Current Door isOpen ->', isOpen);
+
+    return isOpen;
   }
 
   async sendTcpCommand({ command, ipaddress, port }) {
     return await new Promise<string>((resolve, reject) => {
       const client = new net.Socket();
       client.connect(port, ipaddress, () => {
-        this.platform.log.info(`Connected to ${ipaddress}:${port}`);
+        this.platform.log.debug(`Connected to ${ipaddress}:${port}`);
         client.write(command + '\r\n');
       });
 
       client.on('data', (data) => {
         const body = data.toString('utf-8');
         if (body.startsWith('bwr:')) {
-          this.platform.log.info('Received: ' + body);
+          this.platform.log.debug('Received: ' + body);
           client.write('bwc:tcpclose:\r\n');
           client.destroy();
           return resolve(body);
@@ -96,7 +94,7 @@ export class BitwisePushButtonAccessory {
       });
 
       client.on('error', (err) => {
-        this.platform.log.info('Connection errored');
+        this.platform.log.error('Connection errored:', err);
         return reject(err);
       });
 
