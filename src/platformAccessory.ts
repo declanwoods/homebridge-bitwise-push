@@ -56,27 +56,8 @@ export class BitwisePushGarageDoorAccessory {
   async onGetDoorState(): Promise<CharacteristicValue> {
     this.platform.log.info('Get Current Door State');
     this.platform.log.info('Current Target Door State -> ', this.targetState);
-    const context = this.accessory.context;
 
-    const output = context.output;
-    const command = `bwc:get:ad:${output}:`;
-
-    const response = await this.sendTcpCommand({ command, ipaddress: context.ip, port: context.tcpport });
-
-    if (!response) {
-      throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
-    }
-
-    this.platform.log.info('Get Current Door response -> ', response);
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const [value, min, max] = response.split(':').slice(4, 7);
-    const maxInt = parseInt(max);
-
-    let state = CurrentDoorState.OPEN;
-    if (maxInt < 200) {
-      state = CurrentDoorState.CLOSED;
-    }
+    const state = await this.readStateFromBox();
 
     this.platform.log.info('Get Current Door State Value -> ', state);
 
@@ -97,7 +78,7 @@ export class BitwisePushGarageDoorAccessory {
     const outputtype = 'pulse:2';
     const output = this.accessory.context.output;
 
-    const currentDoorState = (await this.onGetDoorState()) as number;
+    const currentDoorState = (await this.readStateFromBox()) as number;
 
     if ((value === TargetDoorState.OPEN && currentDoorState === TargetDoorState.CLOSED) ||
         (value === TargetDoorState.CLOSED && currentDoorState === TargetDoorState.OPEN)) {
@@ -110,6 +91,30 @@ export class BitwisePushGarageDoorAccessory {
   async onGetObstructionDetected(): Promise<CharacteristicValue> {
     this.platform.log.info('Get Obstruction Detected -> ', false);
     return false;
+  }
+
+  async readStateFromBox(): Promise<number> {
+    const context = this.accessory.context;
+
+    const command = `bwc:get:ad:${context.output}:`;
+    const response = await this.sendTcpCommand({ command, ipaddress: context.ip, port: context.tcpport });
+
+    if (!response) {
+      throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+    }
+
+    this.platform.log.info('Get Current Door Response -> ', response);
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const [value, min, max] = response.split(':').slice(4, 7);
+    const maxInt = parseInt(max);
+
+    let state = CurrentDoorState.OPEN;
+    if (maxInt < 200) {
+      state = CurrentDoorState.CLOSED;
+    }
+
+    return state;
   }
 
   async sendTcpCommand({ command, ipaddress, port }) {
