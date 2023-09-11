@@ -1,7 +1,7 @@
 import { Service, PlatformAccessory, CharacteristicValue } from 'homebridge';
 
 import { BitwisePushGarageDoor } from './platform';
-import { CurrentDoorState } from 'hap-nodejs/dist/lib/definitions';
+import { CurrentDoorState, TargetDoorState } from 'hap-nodejs/dist/lib/definitions';
 import { Socket, SocketOptions, createSocket } from 'dgram';
 import * as net from 'net';
 
@@ -93,23 +93,20 @@ export class BitwisePushGarageDoorAccessory {
 
     const outputtype = 'pulse:2';
     const output = this.accessory.context.output;
-    const state = 1;
 
     this.targetState = value as number;
 
-    // if (value === TargetDoorState.OPEN) {
-    //   state = 1;
-    // } else if (value === TargetDoorState.CLOSED) {
-    //   state = 0;
-    // }
-
-    const command = `bwc:set:${outputtype}:${output}:${state}:`;
-    this.socket.send(command, 0, command.length, context.udpport, context.ip, (err) => {
-      this.platform.log.info(`----SOCKET---- sent udp ${command}`);
-      if (err) {
-        this.platform.log.error('udp error: ', err);
-      }
-    });
+    if ((value === TargetDoorState.OPEN && this.targetState === TargetDoorState.CLOSED) ||
+        (value === TargetDoorState.CLOSED && this.targetState === TargetDoorState.OPEN)) {
+      const state = 1;
+      const command = `bwc:set:${outputtype}:${output}:${state}:`;
+      this.socket.send(command, 0, command.length, context.udpport, context.ip, (err) => {
+        this.platform.log.info(`----SOCKET---- sent udp ${command}`);
+        if (err) {
+          this.platform.log.error('udp error: ', err);
+        }
+      });
+    }
   }
 
   async onGetObstructionDetected(): Promise<CharacteristicValue> {
