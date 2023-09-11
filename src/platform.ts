@@ -7,7 +7,8 @@ export type BitwisePushGarageDoorConfig = {
   devices?: {
     name: string;
     ip: string;
-    port: number;
+    tcpport: number;
+    udpport: number;
     output: number;
     threshold?: number;
   }[];
@@ -53,7 +54,8 @@ export class BitwisePushGarageDoor implements DynamicPlatformPlugin {
 
         existingAccessory.context.name = device.name;
         existingAccessory.context.ip = device.ip;
-        existingAccessory.context.port = device.port;
+        existingAccessory.context.tcpport = device.tcpport;
+        existingAccessory.context.udpport = device.udpport;
         existingAccessory.context.output = device.output;
         existingAccessory.context.threshold = device.threshold;
         this.api.updatePlatformAccessories([existingAccessory]);
@@ -66,7 +68,8 @@ export class BitwisePushGarageDoor implements DynamicPlatformPlugin {
         const accessory = new this.api.platformAccessory<BitwiseDeviceContext>(device.name, uuid);
         accessory.context.name = device.name;
         accessory.context.ip = device.ip;
-        accessory.context.port = device.port;
+        accessory.context.tcpport = device.tcpport;
+        accessory.context.udpport = device.udpport;
         accessory.context.output = device.output;
         accessory.context.threshold = device.threshold;
 

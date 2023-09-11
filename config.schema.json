@@ -22,7 +22,12 @@
               "required": true,
               "format": "ipv4"
             },
-            "port": {
+            "tcpport": {
+              "title": "TCP Port Number",
+              "type": "number",
+              "required": true
+            },
+            "udpport": {
               "title": "UDP Port Number",
               "type": "number",
               "required": true

@@ -8,7 +8,8 @@ import * as net from 'net';
 export type BitwiseDeviceContext = {
   name: string;
   ip: string;
-  port: number;
+  tcpport: number;
+  udpport: number;
   output: number;
   threshold?: number;
 };
@@ -58,7 +59,7 @@ export class BitwisePushGarageDoorAccessory {
     const output = context.output;
     const command = `bwc:get:ad:${output}:`;
 
-    const response = await this.sendTcpCommand({ command, ipaddress: context.ip, port: context.port });
+    const response = await this.sendTcpCommand({ command, ipaddress: context.ip, port: context.tcpport });
 
     if (!response) {
       throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
@@ -103,7 +104,7 @@ export class BitwisePushGarageDoorAccessory {
     // }
 
     const command = `bwc:set:${outputtype}:${output}:${state}:`;
-    this.socket.send(command, 0, command.length, context.port, context.ip, (err) => {
+    this.socket.send(command, 0, command.length, context.udpport, context.ip, (err) => {
       this.platform.log.debug(`----SOCKET---- sent udp ${command}`);
       if (err) {
         this.platform.log.error('udp error: ', err);
