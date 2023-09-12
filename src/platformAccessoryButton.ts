@@ -81,7 +81,10 @@ export class BitwisePushButtonAccessory {
   }
 
   async sendHttpCommand({ command, hostname }): Promise<string> {
-    const res = await got.get(`http://${hostname}/bwc.xml?bwc=${command}`);
+    const url = `http://${hostname}/bwc.xml?bwc=${command}`;
+    this.platform.log.info('Requesting: ' + url);
+
+    const res = await got.get(url);
     const parser = new XMLParser();
     const data = parser.parse(res.body);
     this.platform.log.debug('Received: ' + data);
