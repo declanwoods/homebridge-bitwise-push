@@ -47,10 +47,10 @@ export class BitwisePushButtonAccessory {
 
     const context = this.accessory.context;
 
-    const outputtype = 'pulse:2';
+    const outputtype = 'pulse:2'; // pulse, output type BCX relay
     const output = this.accessory.context.output;
 
-    const command = `bwc:set:${outputtype}:${output}:1:`;
+    const command = `bwc:set:${outputtype}:${output}:50:`;
     await this.sendTcpCommand({ command, ipaddress: context.ip, port: context.tcpport });
   }
 
