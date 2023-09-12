@@ -1,4 +1,6 @@
 import { Service, PlatformAccessory, CharacteristicValue } from 'homebridge';
+import { XMLParser } from 'fast-xml-parser';
+import got from 'got';
 
 import { BitwisePushGarageDoor } from './platform';
 import * as net from 'net';
@@ -11,6 +13,12 @@ export type BitwiseDeviceContext = {
   output: number;
   threshold?: number;
 };
+
+export class BitwisePushNAKError extends Error {
+  constructor (message: string) {
+    super(message);
+  }
+}
 
 export class BitwisePushButtonAccessory {
   private service: Service;
@@ -51,14 +59,14 @@ export class BitwisePushButtonAccessory {
     const output = this.accessory.context.output;
 
     const command = `bwc:set:${outputtype}:${output}:50:`;
-    await this.sendTcpCommand({ command, ipaddress: context.ip, port: context.tcpport });
+    await this.sendHttpCommand({ command, hostname: context.ip });
   }
 
   async readStateFromBox(): Promise<boolean> {
     const context = this.accessory.context;
 
     const command = `bwc:get:ad:${context.output}:`;
-    const response = await this.sendTcpCommand({ command, ipaddress: context.ip, port: context.tcpport });
+    const response = await this.sendHttpCommand({ command, hostname: context.ip });
 
     if (!response) {
       throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
@@ -75,32 +83,19 @@ export class BitwisePushButtonAccessory {
     return isOpen;
   }
 
-  async sendTcpCommand({ command, ipaddress, port }) {
-    return await new Promise<string>((resolve, reject) => {
-      const client = new net.Socket();
-      client.connect(port, ipaddress, () => {
-        this.platform.log.debug(`Connected to ${ipaddress}:${port}`);
-        client.write(command + '\r\n');
-      });
+  async sendHttpCommand({ command, hostname }): Promise<string> {
+    const res = await got.get(`http://${hostname}/bwc.xml?bwc=${command}`);
+    const parser = new XMLParser();
+    const data = parser.parse(res.body);
+    this.platform.log.debug('Received: ' + data);
 
-      client.on('data', (data) => {
-        const body = data.toString('utf-8');
-        if (body.startsWith('bwr:')) {
-          this.platform.log.debug('Received: ' + body);
-          client.write('bwc:tcpclose:\r\n');
-          client.destroy();
-          return resolve(body);
-        }
-      });
+    const bwr = data.response.bwr;
+    this.platform.log.debug('Response: ' + bwr);
 
-      client.on('error', (err) => {
-        this.platform.log.error('Connection errored:', err);
-        return reject(err);
-      });
+    if (bwr.startsWith('NAK:')) {
+      throw new BitwisePushNAKError(bwr);
+    }
 
-      client.on('close', () => {
-        return;
-      });
-    });
+    return bwr;
   }
 }
