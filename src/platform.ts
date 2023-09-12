@@ -8,8 +8,6 @@ export type BitwisePushGarageDoorConfig = {
   devices?: {
     name: string;
     ip: string;
-    tcpport: number;
-    udpport: number;
     output: number;
     threshold?: number;
   }[];
@@ -47,7 +45,7 @@ export class BitwisePushGarageDoor implements DynamicPlatformPlugin {
     const config = this.config as BitwisePushGarageDoorConfig;
 
     for (const device of config.devices ?? []) {
-      const uuid = this.api.hap.uuid.generate(`${device.ip}:${device.tcpport}:${device.output}`);
+      const uuid = this.api.hap.uuid.generate(`${device.ip}:${device.output}`);
       const existingAccessory = this.accessories.find(accessory => accessory.UUID === uuid);
 
       if (existingAccessory) {
@@ -55,8 +53,6 @@ export class BitwisePushGarageDoor implements DynamicPlatformPlugin {
 
         existingAccessory.context.name = device.name;
         existingAccessory.context.ip = device.ip;
-        existingAccessory.context.tcpport = device.tcpport;
-        existingAccessory.context.udpport = device.udpport;
         existingAccessory.context.output = device.output;
         existingAccessory.context.threshold = device.threshold;
         this.api.updatePlatformAccessories([existingAccessory]);
@@ -69,8 +65,6 @@ export class BitwisePushGarageDoor implements DynamicPlatformPlugin {
         const accessory = new this.api.platformAccessory<BitwiseDeviceContext>(device.name, uuid);
         accessory.context.name = device.name;
         accessory.context.ip = device.ip;
-        accessory.context.tcpport = device.tcpport;
-        accessory.context.udpport = device.udpport;
         accessory.context.output = device.output;
         accessory.context.threshold = device.threshold;
 

@@ -22,16 +22,6 @@
               "required": true,
               "format": "ipv4"
             },
-            "tcpport": {
-              "title": "TCP Port Number",
-              "type": "number",
-              "required": true
-            },
-            "udpport": {
-              "title": "UDP Port Number",
-              "type": "number",
-              "required": true
-            },
             "output": {
               "title": "Output Number",
               "type": "number",

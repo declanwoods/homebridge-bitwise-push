@@ -1,15 +1,12 @@
+import got from 'got';
 import { Service, PlatformAccessory, CharacteristicValue } from 'homebridge';
 import { XMLParser } from 'fast-xml-parser';
-import got from 'got';
 
 import { BitwisePushGarageDoor } from './platform';
-import * as net from 'net';
 
 export type BitwiseDeviceContext = {
   name: string;
   ip: string;
-  tcpport: number;
-  udpport: number;
   output: number;
   threshold?: number;
 };
