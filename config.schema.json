@@ -29,6 +29,16 @@
               "min": 1,
               "max": 2
             },
+            "tcpport": {
+              "title": "TCP Port Number",
+              "type": "number",
+              "required": true
+            },
+            "udpport": {
+              "title": "UDP Port Number",
+              "type": "number",
+              "required": true
+            },
             "threshold": {
               "title": "Closed Threshold",
               "type": "number",

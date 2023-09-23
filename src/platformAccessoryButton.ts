@@ -1,13 +1,19 @@
 import got from 'got';
+import * as net from 'net';
+import * as dgram from 'dgram';
 import { Service, PlatformAccessory, CharacteristicValue } from 'homebridge';
 import { XMLParser } from 'fast-xml-parser';
 
 import { BitwisePushGarageDoor } from './platform';
 
+const TCP_SOCKETS: Record<string, net.Socket> = {};
+
 export type BitwiseDeviceContext = {
   name: string;
   ip: string;
   output: number;
+  tcpport: number;
+  udpport: number;
   threshold?: number;
 };
 
@@ -56,7 +62,7 @@ export class BitwisePushButtonAccessory {
     const output = this.accessory.context.output;
 
     const command = `bwc:set:${outputtype}:${output}:50:`;
-    await this.sendHttpCommand({ command, hostname: context.ip });
+    await this.sendUdpCommand({ command, ipaddress: context.ip, port: context.udpport });
   }
 
   async readStateFromBox(): Promise<boolean> {
@@ -97,5 +103,60 @@ export class BitwisePushButtonAccessory {
     }
 
     return bwr;
+  }
+
+  async sendTcpCommand({ command, ipaddress, port }: { command: string; ipaddress: string; port: number }): Promise<string> {
+    return await new Promise<string>((resolve, reject) => {
+      let client: net.Socket = TCP_SOCKETS[ipaddress];
+      if (!client) {
+        client = new net.Socket();
+        client.setKeepAlive(true, 5000);
+        TCP_SOCKETS[ipaddress] = client;
+      }
+
+      if (client.closed || client.readyState === 'closed') {
+        client.connect(port, ipaddress, () => {
+          this.platform.log.debug(`Connected to ${ipaddress}:${port}`);
+          client.write(command + '\r\n');
+        });
+      } else {
+        client.write(command + '\r\n');
+      }
+
+      client.on('data', (data) => {
+        const body = data.toString('utf-8');
+        if (body.startsWith('bwr:')) {
+          this.platform.log.debug('Received: ' + body);
+          client.write('bwc:tcpclose:\r\n');
+          client.destroy();
+          return resolve(body);
+        }
+      });
+
+      client.on('error', (err) => {
+        this.platform.log.error('Connection errored:', err);
+        return reject(err);
+      });
+
+      client.on('close', () => {
+        return;
+      });
+    });
+  }
+
+  async sendUdpCommand({ command, ipaddress, port }): Promise<number> {
+    return await new Promise<number>((resolve, reject) => {
+      this.platform.log.info('UDP command: ' + command);
+
+      const socket = dgram.createSocket({ type: 'udp4', reuseAddr: true });
+      socket.send(command, 0, command.length, port, ipaddress, (err, bytes) => {
+        if (err) {
+          this.platform.log.info('UDP error: ' + err);
+          return reject(err);
+        }
+        this.platform.log.info('UDP success: ' + bytes);
+        return resolve(bytes);
+      });
+    });
   }
 }
