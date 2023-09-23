@@ -113,12 +113,21 @@ export class BitwisePushButtonAccessory {
 
       const client = new net.Socket();
       client.setKeepAlive(true, 5000);
+      client.setTimeout(2000);
       socket = new PromiseSocket(client);
       TCP_SOCKETS[ipaddress] = socket;
 
       this.platform.log.info(`TCP connecting to ${ipaddress}:${port}`);
       await socket.connect(port, ipaddress);
       this.platform.log.info(`TCP connected to ${ipaddress}:${port}`);
+
+      socket.socket.on('close', () => {
+        this.platform.log.info(`TCP connection closed: ${ipaddress}:${port}`);
+      });
+
+      socket.socket.on('timeout', () => {
+        this.platform.log.info(`TCP connection timed out: ${ipaddress}:${port}`);
+      });
     }
 
     if (socket.socket.closed || socket.socket.readyState === 'closed') {
