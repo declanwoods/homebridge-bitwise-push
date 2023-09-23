@@ -1,13 +1,13 @@
 import got from 'got';
 import * as net from 'net';
-import PromiseSocket from 'promise-socket';
 import * as dgram from 'dgram';
 import { Service, PlatformAccessory, CharacteristicValue } from 'homebridge';
 import { XMLParser } from 'fast-xml-parser';
 
 import { BitwisePushGarageDoor } from './platform';
+import { PromiseSocket } from './tcp';
 
-const TCP_SOCKETS: Record<string, PromiseSocket<net.Socket>> = {};
+const TCP_SOCKETS: Record<string, PromiseSocket> = {};
 
 export type BitwiseDeviceContext = {
   name: string;

@@ -42,7 +42,6 @@
   },
   "dependencies": {
     "fast-xml-parser": "^4.2.7",
-    "got": "^11.8.6",
-    "promise-socket": "^7.0.0"
+    "got": "^11.8.6"
   }
 }
