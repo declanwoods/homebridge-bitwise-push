@@ -143,16 +143,20 @@ export class BitwisePushButtonAccessory {
         const body = data.toString('utf-8');
         if (body.startsWith('bwr:')) {
           socket.socket.off('data', onData);
+          socket.socket.off('error', onError);
           return resolve(body);
         }
       };
 
-      socket.socket.on('data', onData);
-
-      socket.socket.once('error', (err) => {
+      const onError = (err) => {
         this.platform.log.error('TCP Connection errored:', err);
+        socket.socket.off('data', onData);
+        socket.socket.off('error', onError);
         return reject(err);
-      });
+      };
+
+      socket.socket.on('data', onData);
+      socket.socket.on('error', onError);
     });
   }
 
