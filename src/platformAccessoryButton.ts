@@ -69,7 +69,7 @@ export class BitwisePushButtonAccessory {
     const context = this.accessory.context;
 
     const command = `bwc:get:ad:${context.output}:`;
-    const response = await this.sendTcpCommand({ command, ipaddress: context.ip, port: context.udpport });
+    const response = await this.sendTcpCommand({ command, ipaddress: context.ip, port: context.tcpport });
 
     if (!response) {
       throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
