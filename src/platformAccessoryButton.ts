@@ -1,12 +1,13 @@
 import got from 'got';
 import * as net from 'net';
+import PromiseSocket from 'promise-socket';
 import * as dgram from 'dgram';
 import { Service, PlatformAccessory, CharacteristicValue } from 'homebridge';
 import { XMLParser } from 'fast-xml-parser';
 
 import { BitwisePushGarageDoor } from './platform';
 
-const TCP_SOCKETS: Record<string, net.Socket> = {};
+const TCP_SOCKETS: Record<string, PromiseSocket<net.Socket>> = {};
 
 export type BitwiseDeviceContext = {
   name: string;
@@ -106,40 +107,40 @@ export class BitwisePushButtonAccessory {
   }
 
   async sendTcpCommand({ command, ipaddress, port }: { command: string; ipaddress: string; port: number }): Promise<string> {
-    return await new Promise<string>((resolve, reject) => {
-      let client: net.Socket = TCP_SOCKETS[ipaddress];
-      if (!client) {
-        client = new net.Socket();
-        client.setKeepAlive(true, 5000);
-        TCP_SOCKETS[ipaddress] = client;
-      }
+    let socket = TCP_SOCKETS[ipaddress];
+    if (!socket) {
+      this.platform.log.info('Creating new TCP socket');
 
-      if (client.closed || client.readyState === 'closed') {
-        client.connect(port, ipaddress, () => {
-          this.platform.log.debug(`Connected to ${ipaddress}:${port}`);
-          client.write(command + '\r\n');
-        });
-      } else {
-        client.write(command + '\r\n');
-      }
+      const client = new net.Socket();
+      client.setKeepAlive(true, 5000);
+      socket = new PromiseSocket(client);
+      TCP_SOCKETS[ipaddress] = socket;
 
-      client.on('data', (data) => {
+      this.platform.log.info(`TCP connecting to ${ipaddress}:${port}`);
+      await socket.connect(port, ipaddress);
+      this.platform.log.info(`TCP connected to ${ipaddress}:${port}`);
+    }
+
+    if (socket.socket.closed || socket.socket.readyState === 'closed') {
+      this.platform.log.info(`TCP connecting to ${ipaddress}:${port}`);
+      await socket.connect(port, ipaddress);
+      this.platform.log.info(`TCP connected to ${ipaddress}:${port}`);
+    }
+
+    await socket.write(command + '\r\n');
+
+    return await new Promise((resolve, reject) => {
+      socket.socket.on('data', (data) => {
         const body = data.toString('utf-8');
         if (body.startsWith('bwr:')) {
-          this.platform.log.debug('Received: ' + body);
-          client.write('bwc:tcpclose:\r\n');
-          client.destroy();
+          this.platform.log.info('TCP Received: ' + body);
           return resolve(body);
         }
       });
 
-      client.on('error', (err) => {
-        this.platform.log.error('Connection errored:', err);
+      socket.socket.on('error', (err) => {
+        this.platform.log.error('TCP Connection errored:', err);
         return reject(err);
-      });
-
-      client.on('close', () => {
-        return;
       });
     });
   }
