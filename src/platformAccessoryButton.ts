@@ -130,15 +130,17 @@ export class BitwisePushButtonAccessory {
     await socket.write(command + '\r\n');
 
     return await new Promise((resolve, reject) => {
-      socket.socket.on('data', (data) => {
+      const onData = (data) => {
         const body = data.toString('utf-8');
         if (body.startsWith('bwr:')) {
-          this.platform.log.info('TCP Received: ' + body);
+          socket.socket.off('data', onData);
           return resolve(body);
         }
-      });
+      };
 
-      socket.socket.on('error', (err) => {
+      socket.socket.on('data', onData);
+
+      socket.socket.once('error', (err) => {
         this.platform.log.error('TCP Connection errored:', err);
         return reject(err);
       });
