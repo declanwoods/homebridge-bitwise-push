@@ -131,7 +131,7 @@ export class BitwisePushButtonAccessory {
     }
 
     if (socket.socket.closed || socket.socket.readyState === 'closed') {
-      this.platform.log.info(`TCP connecting to ${ipaddress}:${port}`);
+      this.platform.log.info(`TCP connection was closed, reconnecting: ${ipaddress}:${port}`);
       await socket.connect(port, ipaddress);
       this.platform.log.info(`TCP connected to ${ipaddress}:${port}`);
     }
