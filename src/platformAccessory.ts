@@ -116,9 +116,10 @@ export class BitwisePushAccessory {
     const [value, min, max] = response.split(':').slice(4, 7);
     const maxInt = parseInt(max);
 
+    this.platform.log.info('Get Current Door maxInt ->', maxInt);
     const isOpen = maxInt >= (context.threshold ?? 200); // greater = open
 
-    this.platform.log.debug('Get Current Door isOpen ->', isOpen);
+    this.platform.log.info('Get Current Door isOpen ->', isOpen);
 
     return isOpen;
   }
